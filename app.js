@@ -1,154 +1,80 @@
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
+const apiKey = "8d05ffb75ecbf746ffc119d5b3f713bf";
 
-body{
-    font-family:Arial, sans-serif;
-    background:linear-gradient(135deg, #74ebd5, #9face6);
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    min-height:100vh;
-}
+document.getElementById("weatherForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
 
-.container{
-    width:90%;
-    max-width:1100px;
-    background: #98FB98;
-    border-radius:15px;
-    overflow:hidden;
-    box-shadow:0 10px 25px rgba(0,0,0,0.2);
-}
+    const city = document.getElementById("cityInput").value.trim();
+    const result = document.getElementById("result");
 
-.top-bar{
-    background:#333;
-    padding:15px;
-}
-
-.dot{
-    height:14px;
-    width:14px;
-    border-radius:50%;
-    display:inline-block;
-    margin-right:8px;
-}
-
-.red{background:red;}
-.yellow{background:gold;}
-.green{background:limegreen;}
-
-.content{
-    text-align:center;
-    padding:40px 20px;
-}
-
-.weather-img{
-    width:120px;
-    margin-bottom:20px;
-}
-
-h1{
-    font-size:50px;
-    margin-bottom:30px;
-    text-align:center;
-}
-
-input{
-    width:300px;
-    padding:12px;
-    border:none;
-    border-radius:8px;
-    font-size:18px;
-    max-width: 300px;
-}
-
-button{
-    padding:12px 30px;
-    border:none;
-    border-radius:25px;
-    background:#ff944d;
-    font-size:18px;
-    cursor:pointer;
-    min-width:150px;
-}
-
-button:hover{
-    color: white;
-    background-color: green;
-}
-
-form{
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    gap:10px;
-    flex-wrap:wrap;
-}
-
-#result{
-    margin-top:25px;
-    font-size:22px;
-    word-wrap:break-word;
-    line-height:1.8;
-}
-
-.footer{
-    margin-top:30px;
-    color:#444;
-}
-
-
-
-/* Tablet */
-@media (max-width: 768px){
-
-    h1{
-        font-size:40px;
+    if (city === "") {
+        result.innerHTML = "Please enter city name";
+        return;
     }
 
-    .weather-img{
-        width:100px;
+    result.innerHTML = "Loading...";
+
+    try {
+        const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`);
+
+        const data = await res.json();
+
+        if (Number(data.cod) !== 200) {
+            result.innerHTML = "City not found";
+            return;
+        }
+
+        result.innerHTML = `
+            <h2> ${data.name}</h2>
+            <p> Temperature: ${Math.round(data.main.temp)}°C</p>
+            <p> Weather  Status: ${data.weather[0].description}</p>
+            <p> Humidity Level: ${data.main.humidity}%</p>
+            <p> Air Speed: ${Math.round(data.wind.speed)} km/h</p>
+        `;
+
+    } catch (error) {
+        result.innerHTML = "Error loading weather";
+    }
+});
+
+
+// Current Location Weather
+
+document.getElementById("locationbtn").addEventListener("click", () => {
+
+    const result = document.getElementById("result");
+
+    if (!navigator.geolocation) {
+        result.innerHTML = "Location not supported";
+        return;
     }
 
-    #result{
-        font-size:18px;
-    }
-}
+    result.innerHTML = "Loadding your location..........";
 
-/* Mobile */
-@media (max-width: 480px){
+    navigator.geolocation.getCurrentPosition(async (position) => {
 
-    .container{
-        width:95%;
-    }
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
 
-    .content{
-        padding:25px 15px;
-    }
+        try {
 
-    h1{
-        font-size:32px;
-    }
+            const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`);
 
-    .weather-img{
-        width:80px;
-    }
+            const data = await res.json();
 
-    input{
-        max-width:100%;
-    }
+            result.innerHTML = `
+                <h2>${data.name}</h2>
+                <p>Temperature: ${Math.round(data.main.temp)}°C</p>
+                <p>Weather  Status: ${data.weather[0].description}</p>
+                <p>Humidity Level: ${data.main.humidity}%</p>
+                <p>Air Speed: ${Math.round(data.wind.speed)} km/h</p>
+            `;
 
-    button{
-        width:100%;
-    }
+        } catch (error) {
+            result.innerHTML = "Error loading weather";
+        }
 
-    #result{
-        font-size:16px;
-    }
+    }, () => {
+        result.innerHTML = "Unable to get your location";
+    });
 
-    #result h2{
-        font-size:22px;
-    }
-}
+});
